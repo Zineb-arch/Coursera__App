@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Results Card -->
+            <div class="card shadow-lg border-0">
+                <div class="card-header {% if passed %}bg-success{% else %}bg-danger{% endif %} text-white py-4">
+                    <div class="text-center">
+                        {% if passed %}
+                        <i class="fas fa-trophy fa-4x mb-3"></i>
+                        <h1 class="display-4">Congratulations!</h1>
+                        {% else %}
+                        <i class="fas fa-redo fa-4x mb-3"></i>
+                        <h1 class="display-4">Keep Trying!</h1>
+                        {% endif %}
+                        <p class="lead mb-0">You have completed the exam for {{ lesson.title }}</p>
+                    </div>
+                </div>
+                
+                <div class="card-body p-5">
+                    <!-- Score Display -->
+                    <div class="text-center mb-5">
+                        <div class="display-1 fw-bold {% if passed %}text-success{% else %}text-danger{% endif %}">
+                            {{ percentage|floatformat:1 }}%
+                        </div>
+                        <p class="text-muted">Your Score</p>
+                        
+                        <div class="progress mb-4">
+                            <div class="progress-bar {% if passed %}bg-success{% else %}bg-danger{% endif %} progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 data-percentage="{{ percentage|floatformat:0 }}"
+                                 aria-valuenow="0" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100"
+                                 title="Your exam score: {{ total_score }} out of {{ max_score }} points ({{ percentage|floatformat:1 }}%)">
+                                {{ total_score }} / {{ max_score }} points
+                            </div>
+                        </div>
+                        
+                        {% if passed %}
+                        <div class="alert alert-success fs-5">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Passed!</strong> You scored above the 70% threshold.
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning fs-5">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Not passed.</strong> You need 70% or higher to pass. Try again!
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Detailed Results -->
+                    <h3 class="mb-4 border-bottom pb-2">Exam Results</h3>
+                    
+                    {% for result in detailed_results %}
+                    <div class="card mb-3 border-{% if result.is_correct %}success{% else %}danger{% endif %}">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-10">
+                                    <h5 class="card-title">
+                                        Q{{ forloop.counter }}: {{ result.question.question_text }}
+                                    </h5>
+                                    <p class="card-text">
+                                        <strong>Your Answer:</strong> 
+                                        <span class="{% if result.is_correct %}text-success{% else %}text-danger{% endif %}">
+                                            {{ result.user_answer.choice_text }}
+                                            {% if result.is_correct %}
+                                            <i class="fas fa-check ms-2"></i>
+                                            {% else %}
+                                            <i class="fas fa-times ms-2"></i>
+                                            {% endif %}
+                                        </span>
+                                    </p>
+                                    {% if not result.is_correct %}
+                                    <p class="card-text">
+                                        <strong>Correct Answer:</strong> 
+                                        <span class="text-success">
+                                            {{ result.question.choices.filter.is_correct=True.first.choice_text }}
+                                        </span>
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <span class="badge bg-{% if result.is_correct %}success{% else %}danger{% endif %} fs-6">
+                                        {{ result.points }} point{{ result.points|pluralize }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Actions -->
+                    <div class="d-grid gap-3 d-md-flex justify-content-md-center mt-5">
+                        {% if not passed %}
+                        <a href="{% url 'course_app:start_exam' lesson.id %}" class="btn btn-danger btn-lg px-5">
+                            <i class="fas fa-redo me-2"></i>Retake Exam
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'course_app:course_detail' lesson.course.id %}" class="btn btn-outline-primary btn-lg px-5">
+                            <i class="fas fa-book me-2"></i>Back to Course
+                        </a>
+                        
+                        <a href="#" class="btn btn-success btn-lg px-5">
+                            <i class="fas fa-download me-2"></i>Download Certificate
+                        </a>
+                    </div>
+                    
+                    <!-- Statistics -->
+                    <div class="row text-center mt-5 pt-4 border-top">
+                        <div class="col-md-3">
+                            <h4 class="text-primary">{{ submission_count }}</h4>
+                            <p class="text-muted">Questions Attempted</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-success">{{ total_score }}</h4>
+                            <p class="text-muted">Points Earned</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-info">{{ max_score }}</h4>
+                            <p class="text-muted">Total Points</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="{% if passed %}text-success{% else %}text-danger{% endif %}">
+                                {{ percentage|floatformat:1 }}%
+                            </h4>
+                            <p class="text-muted">Final Score</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer text-center text-muted py-3">
+                    <small>
+                        <i class="fas fa-clock me-1"></i> Exam completed on {% now "F j, Y, g:i a" %}
+                        | <i class="fas fa-user me-1"></i> {{ request.user.username }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+    .card {
+        border-radius: 20px;
+    }
+    
+    .card-header {
+        border-radius: 20px 20px 0 0 !important;
+    }
+    
+    .progress {
+        border-radius: 15px;
+        overflow: hidden;
+        height: 30px;
+    }
+    
+    .progress-bar {
+        border-radius: 15px;
+    }
+    
+    .progress-bar-dynamic {
+        border-radius: 15px;
+    }
+    
+    .badge {
+        font-size: 1em;
+        padding: 10px 20px;
+        border-radius: 10px;
+    }
+    
+    .btn-lg {
+        padding: 15px 40px;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressBar = document.querySelector('.progress-bar');
+        const percentage = parseFloat(progressBar.getAttribute('data-percentage'));
+        progressBar.style.width = percentage + '%';
+        progressBar.setAttribute('aria-valuenow', Math.round(percentage));
+    });
+</script>
+{% endblock %}
